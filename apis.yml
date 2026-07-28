@@ -1,0 +1,134 @@
+aid: via-rail
+name: VIA Rail Canada
+url: https://raw.githubusercontent.com/api-evangelist/via-rail/refs/heads/main/apis.yml
+kind: company
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+description: >-
+  VIA Rail Canada Inc. is the federal Crown corporation that operates Canada's
+  national intercity passenger rail network, headquartered in Montreal and
+  reporting to Parliament through the Minister of Transport. It runs the
+  Quebec City - Windsor corridor plus long-distance and regional services
+  including The Canadian (Toronto - Vancouver), The Ocean (Montreal - Halifax),
+  Winnipeg - Churchill, Jasper - Prince Rupert, Sudbury - White River, and the
+  jointly operated Toronto - New York Maple Leaf. In the distribution chain
+  VIA Rail is a direct-only supplier: it sells through viarail.ca, its mobile
+  app, its call centre, and its own Travel Agency and Tour Operator portals on
+  reservia.viarail.ca. There is no GDS channel, no NDC, no OSDM, and no
+  reseller API. VIA Rail's API posture is honestly stated as an open-standard
+  data feed and nothing else. It publishes a real, ungated Developer Resources
+  page offering a static GTFS schedule feed licensed under the Open Government
+  Licence - Canada 2.0, with a dev@viarail.ca contact address - one of the very
+  few genuinely self-serve, commercially reusable machine-readable contracts
+  in Canadian travel. Everything transactional is unpublished: the reservation
+  platform is Sqills S3 Passenger integrated by CGI, its API gateway at
+  api.reservia.viarail.ca answers 403 "Missing Authentication Token" with no
+  documentation, no terms and no published contract, and agency access is
+  gated behind approval plus a registered IATA number, while tour operators
+  must commit to a CAD $25,000 per year minimum revenue and may not sell VIA
+  tickets outside packaged travel.
+tags:
+  - Travel
+  - Canada
+  - Rail
+  - Passenger Rail
+  - Transit
+  - GTFS
+  - Open Data
+  - Booking
+  - Distribution
+  - Travel Agents
+  - Crown Corporation
+  - Loyalty
+created: '2026-07-28'
+modified: '2026-07-28'
+specificationVersion: '0.19'
+apis:
+  - aid: via-rail:via-rail-gtfs-schedule-feed
+    name: VIA Rail GTFS Schedule Feed
+    description: >-
+      VIA Rail's complete national timetable published as a static General
+      Transit Feed Specification (GTFS) archive, offered for download from the
+      VIA Rail Developer Resources page with no registration, no API key and no
+      rate limit. The July 9th 2026 edition covers a 20260709-20261107 service
+      window and carries 19 routes, 388 stations, 85 trips, 1,577 stop times
+      and 86,116 shape points, plus the GTFS ticketing extension files
+      ticketing_identifiers.txt and ticketing_deep_links.txt that map each stop
+      to a four-letter VIA station mnemonic and each trip to a VIA train number.
+      Downloading the file binds the consumer to the Open Government Licence -
+      Canada version 2.0, which permits copying, modification, distribution and
+      commercial use for any lawful purpose subject to attribution. This is the
+      only machine-readable contract VIA Rail publishes.
+    humanURL: https://www.viarail.ca/en/developer-resources
+    baseURL: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
+    tags:
+      - GTFS
+      - Schedules
+      - Timetables
+      - Transit
+      - Open Data
+      - Rail
+    properties:
+      - type: Documentation
+        url: https://www.viarail.ca/en/developer-resources
+      - type: GTFS
+        url: gtfs/viarail-gtfs.zip
+      - type: Download
+        url: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
+      - type: License
+        url: https://open.canada.ca/en/open-government-licence-canada
+      - type: Specification
+        url: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
+      - type: Email
+        url: mailto:dev@viarail.ca
+common:
+  - type: Website
+    url: https://www.viarail.ca/en
+  - type: Documentation
+    url: https://www.viarail.ca/en/developer-resources
+  - type: DocumentationFrench
+    url: https://www.viarail.ca/fr/ressources-developpeurs
+  - type: Corporate
+    url: https://corpo.viarail.ca/en
+  - type: Newsroom
+    url: https://media.viarail.ca/en
+  - type: TravelAgentPortal
+    url: https://reservia.viarail.ca/en/booking/agent/login
+  - type: PartnerPortal
+    url: https://reservia.viarail.ca/en/booking/contra/login
+  - type: TravelAgentRegistration
+    url: https://www.viarail.ca/en/travel-agents/travel-agent-registration
+  - type: TourOperatorRegistration
+    url: https://www.viarail.ca/en/travel-agents/tour-operator-registration
+  - type: FAQ
+    url: https://www.viarail.ca/en/travel-agents/travel-agent-faq
+  - type: FAQ
+    url: https://www.viarail.ca/en/travel-agents/tour-operator-faq
+  - type: Policy
+    url: https://www.viarail.ca/en/travel-agents/ad75-conditions
+  - type: TermsOfService
+    url: https://www.viarail.ca/en/terms-and-conditions
+  - type: Policy
+    url: https://www.viarail.ca/en/conditions-contract
+  - type: Privacy
+    url: https://www.viarail.ca/en/our-privacy-policy
+  - type: License
+    url: https://open.canada.ca/en/open-government-licence-canada
+  - type: Governance
+    url: https://corpo.viarail.ca/en/company/governance-ethics
+  - type: AccessToInformation
+    url: https://www.viarail.ca/sites/all/files/media/pdfs/access-to-information/en_entr_access_info_form.pdf
+  - type: Loyalty
+    url: https://www.viapreference.com/en/home
+  - type: Booking
+    url: https://reservia.viarail.ca/
+  - type: Status
+    url: https://tsimobile.viarail.ca/
+  - type: Blog
+    url: https://www.viarail.ca/en/blog
+  - type: Careers
+    url: https://careers.viarail.ca/?locale=en_US
+  - type: LinkedIn
+    url: https://www.linkedin.com/company/via-rail-canada
+maintainers:
+  - FN: Kin Lane
+    email: kin@apievangelist.com

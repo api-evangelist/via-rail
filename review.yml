@@ -1,0 +1,663 @@
+aid: via-rail
+name: VIA Rail Canada
+review:
+  question: >-
+    Does VIA Rail Canada publish any public or partner API, and what would it
+    cost a customer of VIA Rail to leave?
+  answer: partial
+  date: '2026-07-28'
+  reviewer: API Evangelist
+  tier: rail-ground
+  homeMarket: Canada
+  primaryDomain: viarail.ca
+findings:
+  summary: |
+    VIA Rail Canada publishes exactly one machine-readable contract, and it is
+    an open standard. https://www.viarail.ca/en/developer-resources is a real,
+    live, ungated Developer Resources page — no login, no registration, no API
+    key, no rate limit — offering a static GTFS archive at
+    https://www.viarail.ca/sites/all/files/gtfs/viarail.zip and a contact
+    address of dev@viarail.ca. The page states: "VIA Rail has schedules
+    published in the General Transit Feed Specification (GTFS) format available
+    for developers. By downloading our GTFS data, you agree to be bound to the
+    Open Government Licence – Canada version 2." The 2026-07-09 edition was
+    harvested, parses cleanly, and holds 19 routes, 388 stations, 85 trips,
+    1,577 stop times and 86,116 shape points over a 20260709-20261107 service
+    window.
+
+    Everything transactional is unpublished. There is no REST API, no OpenAPI,
+    no AsyncAPI, no GraphQL, no NDC, no OSDM and no GDS channel. The
+    developer., developers., api., apis., docs. and cdn. subdomains of
+    viarail.ca are all NXDOMAIN. Every well-known spec path on www.viarail.ca
+    returns 404.
+
+    The reservation platform is now visible even though it is not documented.
+    The reservia.viarail.ca Angular bundle carries an explicit
+    `apiGateway.baseUrl` of "https://api.{{env}}tst.reservia.viarail.ca" and an
+    `s3Passenger.grantTypes` map of Sqills OAuth grant-type URNs
+    (https://com.sqills.s3.oauth.public, .booking, .agent) alongside RFC 8693
+    token exchange. A leftover test fixture points at
+    https://api.viarail-dev-cgi-test.cloud.sqills.com/api/v1/meta/stations —
+    a host that now NXDOMAINs, but whose name identifies the integrator (CGI)
+    and the vendor (Sqills). The production gateway api.reservia.viarail.ca
+    resolves and answers 403 {"message":"Missing Authentication Token"}. The
+    booking front end reads `_u_i_c_station_code` off every segment, which is
+    the UIC station-code field of the Sqills S3 Passenger data model. So VIA
+    Rail runs a European rail PSS on a Canadian network, and publishes not one
+    line of its contract.
+
+    That is the whole shape of the finding: VIA Rail is unusually generous with
+    schedule data and completely closed on inventory. A developer can build a
+    trip planner against VIA in an afternoon and can never sell a VIA ticket.
+  consumerSurface:
+    documented: partial
+    note: >-
+      Schedules are documented and downloadable as GTFS. Live train positions
+      are served, undocumented, from https://tsimobile.viarail.ca/data/allData.json
+      behind the public VIA Rail Tracker at https://tsimobile.viarail.ca/.
+      Booking, check-in, seat selection, servicing and the VIA Préférence
+      loyalty programme are delivered only through viarail.ca, reservia.viarail.ca,
+      viapreference.com, the VIA Rail mobile app and the call centre. No public
+      consumer booking API is documented.
+  distributionSurface:
+    documented: false
+    channels:
+      - name: Direct (web, mobile app, call centre)
+        evidence: >-
+          reservia.viarail.ca is VIA's own Sqills-backed booking engine;
+          agency.txt in the GTFS names https://reservia.viarail.ca/ as the
+          agency_fare_url and ticketing_deep_links.txt gives
+          https://reservia.viarail.ca/google-results as the single deep link.
+      - name: Travel Agency Portal
+        evidence: >-
+          https://reservia.viarail.ca/en/booking/agent/login — a human web
+          sign-in only. The travel-agent FAQ states an agency must "be approved
+          as an individual agency or registered under a preferred partner
+          agreement" and that "your agency IATA number is registered", after
+          which an administrator is identified and individual agents register
+          under that IATA number. No API, no documentation.
+      - name: Tour Operator Portal
+        evidence: >-
+          Same reservia sign-in. The tour-operator FAQ requires operators to
+          "demonstrate a plan to earn and maintain a minimum revenue of
+          $25,000/year and combine rail tickets with other tour components in
+          travel packages", states "VIA Rail tickets must not be sold on their
+          own and outside of packaged travel", and issues "a unique 8-digit
+          account number".
+      - name: Business partners (contra)
+        evidence: >-
+          https://reservia.viarail.ca/en/booking/contra/login, linked from the
+          site footer as "Business partners". Login only; nothing published
+          about what a business partner is or how one is appointed.
+      - name: GDS
+        evidence: >-
+          None found. Sabre, Amadeus, Travelport and GDS are not mentioned on
+          any VIA Rail travel-agent, tour-operator or corporate page probed.
+      - name: NDC / OSDM
+        evidence: >-
+          None found. IATA NDC is not applicable to a rail operator and is
+          absent from every page probed. The rail analogue, the UIC Open Sales
+          and Distribution Model (OSDM, https://osdm.io/, 200), is also never
+          referenced by VIA Rail — even though its PSS front end carries UIC
+          station codes.
+  probes:
+    dns:
+      - host: developer.viarail.ca
+        result: NXDOMAIN
+      - host: developers.viarail.ca
+        result: NXDOMAIN
+      - host: api.viarail.ca
+        result: NXDOMAIN
+      - host: apis.viarail.ca
+        result: NXDOMAIN
+      - host: docs.viarail.ca
+        result: NXDOMAIN
+      - host: cdn.viarail.ca
+        result: NXDOMAIN
+      - host: www.viarail.ca
+        result: 'A 108.163.144.101'
+      - host: viarail.ca
+        result: 'A 108.163.144.103'
+      - host: reservia.viarail.ca
+        result: 'A 108.139.29.4, .38, .46, .83 (AWS CloudFront)'
+      - host: api.reservia.viarail.ca
+        result: 'A 3.171.139.4, .24, .77, .80 (AWS API Gateway) — live, undocumented'
+      - host: api.tst.reservia.viarail.ca
+        result: NXDOMAIN
+      - host: api.viarail-dev-cgi-test.cloud.sqills.com
+        result: 'NXDOMAIN — dead, but named in a test fixture inside the production bundle'
+      - host: tsimobile.viarail.ca
+        result: 'CNAME dpg8actiayut8.cloudfront.net'
+      - host: corpo.viarail.ca
+        result: 'A 184.107.63.52'
+      - host: media.viarail.ca
+        result: 'A 184.107.63.52'
+    http:
+      - url: https://www.viarail.ca/en/developer-resources
+        status: 200
+        note: >-
+          THE developer portal. Ungated, no registration, no key. Offers the
+          GTFS download, states the OGL-Canada 2.0 licence condition, and gives
+          dev@viarail.ca as the developer contact. Discovered via the sitemap,
+          not via any /developer or /api path.
+      - url: https://www.viarail.ca/fr/ressources-developpeurs
+        status: 200
+        note: 'French equivalent of the Developer Resources page.'
+      - url: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
+        status: 200
+        note: '1,010,621 bytes, 12 files, parses as valid GTFS. Harvested to gtfs/viarail-gtfs.zip.'
+      - url: https://www.viarail.ca/
+        status: 200
+      - url: https://www.viarail.ca/robots.txt
+        status: 200
+        note: 'Drupal default robots.txt. No AI or content-signal directives. Sitemap declared.'
+      - url: https://www.viarail.ca/sitemap.xml
+        status: 200
+        note: >-
+          Simple XML Sitemap (Drupal). Two pages, 2,083 URLs total. Page 1
+          contains /en/developer-resources and /fr/ressources-developpeurs —
+          the only reason the developer portal was findable.
+      - url: https://www.viarail.ca/openapi.json
+        status: 404
+      - url: https://www.viarail.ca/swagger.json
+        status: 404
+      - url: https://www.viarail.ca/api-docs
+        status: 404
+      - url: https://www.viarail.ca/api
+        status: 404
+      - url: https://www.viarail.ca/apis
+        status: 404
+      - url: https://www.viarail.ca/developer
+        status: 404
+      - url: https://www.viarail.ca/developers
+        status: 404
+      - url: https://www.viarail.ca/docs
+        status: 404
+      - url: https://www.viarail.ca/.well-known/security.txt
+        status: 404
+      - url: https://www.viarail.ca/.well-known/ai-plugin.json
+        status: 404
+      - url: https://www.viarail.ca/llms.txt
+        status: 404
+      - url: https://www.viarail.ca/en/open-data
+        status: 404
+      - url: https://www.viarail.ca/en/about-via-rail/open-data
+        status: 404
+      - url: https://www.viarail.ca/en/travel-agents
+        status: 200
+      - url: https://www.viarail.ca/en/travel-agents/travel-agent-registration
+        status: 200
+      - url: https://www.viarail.ca/en/travel-agents/tour-operator-registration
+        status: 200
+      - url: https://www.viarail.ca/en/travel-agents/travel-agent-faq
+        status: 200
+      - url: https://www.viarail.ca/en/travel-agents/tour-operator-faq
+        status: 200
+      - url: https://www.viarail.ca/en/travel-agents/ad75-conditions
+        status: 200
+        note: 'AD75 agent-fare terms; booking by telephone only, IATA or tour-operator number required.'
+      - url: https://www.viarail.ca/en/terms-and-conditions
+        status: 200
+        note: 'Terms of Use of the Site, last updated August 1, 2024.'
+      - url: https://www.viarail.ca/en/conditions-contract
+        status: 200
+        note: 'Conditions of the contract of carriage plus limited liability for delays and cancellations.'
+      - url: https://www.viarail.ca/en/our-privacy-policy
+        status: 200
+        note: >-
+          Page renders a title and an empty body on server-side fetch; the
+          policy text is not present in the returned HTML. No access, correction
+          or portability language could be verified from this URL.
+      - url: https://reservia.viarail.ca/
+        status: 200
+      - url: https://reservia.viarail.ca/en/booking/agent/login
+        status: 200
+        note: 'Angular SPA sign-in with Google reCAPTCHA. Travel agent portal.'
+      - url: https://reservia.viarail.ca/en/booking/contra/login
+        status: 200
+        note: 'Business partner sign-in.'
+      - url: https://reservia.viarail.ca/en/booking/main.c2fde2a60cb467b6.js
+        status: 200
+        note: '5,128,794-byte production bundle. Source of the Sqills / CGI / api-gateway evidence below.'
+      - url: https://api.reservia.viarail.ca/
+        status: 403
+        note: '{"message":"Missing Authentication Token"} — AWS API Gateway. Live, undocumented, no published contract.'
+      - url: https://api.reservia.viarail.ca/api/v1/meta/stations
+        status: 403
+        note: 'Same 403. Path shape confirmed from the bundle, not from any documentation.'
+      - url: https://api.viarail-dev-cgi-test.cloud.sqills.com/api/v1/meta/stations
+        status: 0
+        note: 'curl exit 6, NXDOMAIN. Named only in a mock fixture inside the production bundle.'
+      - url: https://tsimobile.viarail.ca/
+        status: 200
+        note: 'VIA Rail Tracker. Apache/2.4.52 behind CloudFront. Mapbox GL front end.'
+      - url: https://tsimobile.viarail.ca/data/allData.json
+        status: 200
+        note: >-
+          242,706 bytes of live train positions — 61 keys, each with lat, lng,
+          speed, direction, poll timestamp and bilingual alerts. Public,
+          unauthenticated, undocumented. Not GTFS-Realtime; a bespoke JSON shape.
+      - url: https://tsimobile.viarail.ca/data.json
+        status: 404
+      - url: https://corpo.viarail.ca/en
+        status: 200
+      - url: https://corpo.viarail.ca/en/company/governance-ethics
+        status: 200
+        note: >-
+          Access to Information and Privacy landing page. Links the Access to
+          Information Request Form PDF, Info Source classes of record and
+          personal information banks, and per-year listings of completed ATI
+          requests from 2012 to 2018.
+      - url: https://www.viarail.ca/sites/all/files/media/pdfs/access-to-information/en_entr_access_info_form.pdf
+        status: 200
+        note: 'Access to Information Request Form, ~492 KB.'
+      - url: https://corpo.viarail.ca/sitemap.xml
+        status: 200
+        note: >-
+          327 URLs, every one of which points at the staging host
+          corpo-viarail-ca.tinkint.ca (NXDOMAIN publicly). A misconfiguration,
+          not an API surface — recorded because it is the only leak found on
+          the corporate site.
+      - url: https://media.viarail.ca/en
+        status: 200
+      - url: https://www.viapreference.com/en/home
+        status: 200
+        note: 'VIA Préférence loyalty programme, separate domain. No API.'
+      - url: https://open.canada.ca/en/open-government-licence-canada
+        status: 200
+        note: 'The licence the GTFS is issued under.'
+      - url: 'https://open.canada.ca/data/en/api/3/action/organization_show?id=viarail'
+        status: 200
+        note: >-
+          Organization "VIA Rail Canada Inc." exists on the federal open data
+          portal with package_count 0. VIA Rail publishes its GTFS on its own
+          site, not through open.canada.ca.
+      - url: https://osdm.io/
+        status: 200
+        note: 'UIC Open Sales and Distribution Model. Checked as the rail analogue of NDC; VIA Rail never references it.'
+      - url: https://www.sqills.com/
+        status: 200
+        note: >-
+          Vendor site. Fetched HTML contains no occurrence of "osdm", "open
+          sales", "uic", "api" or "siemens", so no vendor standards claim is
+          asserted here.
+      - url: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
+        status: 200
+        note: 'GTFS Schedule reference, used as the Specification property. gtfs.org itself returns 403 to non-browser clients.'
+  probeMethodologyWarning: >-
+    reservia.viarail.ca is an S3-hosted single-page app served through
+    CloudFront with a catch-all rewrite. Every path — including /openapi.json,
+    /swagger.json, /api-docs, /api/v1, /apidocs and a deliberately nonsense
+    control path — returns HTTP 200, text/html, 3,295 bytes, ETag
+    "ab3cf4b8d3619361518096db7b78e2da". These are the SPA shell, NOT API
+    artifacts. Only /.well-known/apple-app-site-association returned different
+    content (89 bytes, the ca.viarail.reservia app association). Any spec
+    harvest against this host that trusts a 200 status code will produce
+    fabricated results.
+  observedButUndocumented:
+    - host: https://api.reservia.viarail.ca
+      note: >-
+        Live AWS API Gateway fronting the Sqills S3 Passenger reservation
+        platform. Answers 403 "Missing Authentication Token". No documentation,
+        no terms of use, no published contract, no rate limits, no versioning
+        policy. Deliberately excluded from apis.yml.
+    - host: https://tsimobile.viarail.ca/data/allData.json
+      note: >-
+        Live, public, unauthenticated JSON of real-time train positions and
+        service alerts, fetched by the VIA Rail Tracker via
+        $.getJSON('data/allData.json'). It is not referenced on the Developer
+        Resources page, carries no licence, no terms and no schema, and is not
+        GTFS-Realtime. It is an implementation detail of a web page, not a
+        published API, and is deliberately excluded from apis.yml.
+    - host: 'apiGateway.baseUrl = "https://api.{{env}}tst.reservia.viarail.ca"'
+      note: >-
+        Environment-templated gateway host embedded in the production Angular
+        bundle, alongside an environment enum of dev, dev-config, ppd, prod,
+        qa, qc and training. The SPA also routes /apidocs, but only when
+        !isProd() — so in production there is no API documentation route.
+    - host: 'Sqills S3 Passenger OAuth grant types'
+      note: >-
+        The bundle declares grantTypes public/booking/agent as
+        https://com.sqills.s3.oauth.public, .booking and .agent, plus
+        refresh_token and urn:ietf:params:oauth:grant-type:token-exchange
+        (RFC 8693). Standard OAuth 2.0 machinery, vendor-namespaced grant URNs.
+switchingCost:
+  interfaceShape:
+    value: open-standard
+    standardNamed: >-
+      GTFS — the General Transit Feed Specification (static), plus the GTFS
+      ticketing extension (ticketing_identifiers.txt and
+      ticketing_deep_links.txt). The feed declares agency, feed_info, calendar,
+      calendar_dates, stops, routes, trips, frequencies, stop_times and shapes,
+      all conformant, and the data is licensed under Open Government Licence –
+      Canada version 2.0.
+    evidence: >-
+      The harvested 2026-07-09 archive parses with a plain CSV reader against
+      the GTFS reference — 12 files, 19 routes, 388 stops, 85 trips, 1,577 stop
+      times, 86,116 shape points, feed window 20260709-20261107. GTFS is
+      implemented by thousands of agencies and consumed by Google Maps, Transit,
+      Rome2Rio, OpenTripPlanner, Transitland and the Mobility Database, so
+      VIA's schedule contract is genuinely swappable: a consumer that already
+      ingests GTFS ingests VIA with zero new code.
+    scopeCaveat: >-
+      This value describes the ONLY contract VIA Rail publishes, and it covers
+      schedules alone. The transactional half of the business — shopping,
+      offers and pricing, booking and order, payment, ticketing, servicing and
+      changes, loyalty — is none-published. Read the two together: open standard
+      for reading the timetable, nothing at all for selling a seat.
+  secondSource:
+    value: no-alternative
+    alternativesConsidered: >-
+      For VIA Rail seat inventory there is no second source. VIA is the
+      designated national passenger rail operator and is the only route to a VIA
+      seat; there is no GDS carrying it, no NDC-equivalent endpoint, and no
+      aggregator with a published VIA API. Alternatives considered and rejected:
+      Rocky Mountaineer (private, luxury, different routes, not a source of VIA
+      inventory), Ontario Northland and exo (regional operators on distinct
+      corridors), Amtrak (a partner on the Toronto - New York Maple Leaf that
+      appears inside VIA's own GTFS as route 119-120, not a reseller of VIA
+      content), Flixbus, Megabus and Rider Express (modal substitutes for the
+      journey, not the inventory), and the domestic airlines Air Canada,
+      WestJet, Porter and Flair (again modal substitutes). For the SCHEDULE
+      DATA the picture inverts completely: GTFS is a commodity format, the OGL
+      permits commercial reuse, and a consumer can migrate their ingestion to
+      any other GTFS publisher without touching their parser. VIA has made the
+      cheap half of its data maximally portable and the expensive half
+      unreachable.
+  exitPath:
+    value: export-on-request
+    operationCited: >-
+      No export, dump, bulk or data-portability operation exists on any VIA Rail
+      API, because no transactional API is published. The statutory route is the
+      one that exists: VIA Rail Canada Inc. is a federal Crown corporation
+      subject to the Access to Information Act and the Privacy Act, and
+      https://corpo.viarail.ca/en/company/governance-ethics publishes an Access
+      to Information Request Form PDF, Info Source classes of record and
+      personal information banks, and per-year listings of completed ATI
+      requests from 2012 through 2018. That is a statutory paper request, not an
+      endpoint.
+    counterweight: >-
+      The GTFS is itself a complete bulk download — every consumer gets the
+      whole dataset every time, so for schedule data there is no lock-in to exit
+      from. The privacy policy page at
+      https://www.viarail.ca/en/our-privacy-policy returns 200 but renders an
+      empty body on server-side fetch, so no consumer access, correction or
+      portability commitment could be verified from the policy itself. Nothing
+      is published about exporting a booking history, a VIA Préférence balance,
+      or an agency's transaction record out of the Travel Agency Portal.
+  identifierPortability:
+    value: >-
+      A clean split — genuinely portable identifiers on the published side,
+      wholly proprietary identifiers on the commercial side.
+    identifiersFound:
+      - 'GTFS agency_id: 1 (single agency, "VIA Rail")'
+      - 'GTFS stop_id: opaque VIA-internal integers (199, 344, 345 …)'
+      - 'GTFS stop_code / ticketing_stop_id: four-letter station mnemonics — BENN Benny, ALEX Alexandria, SARN Sarnia, NIAG Niagara Falls, YONK Yonkers, WVHO, OCHR. 388 of them, one per station'
+      - 'GTFS route_id: composite station-pair keys such as 226-119 (Montréal - Toronto), 8-119 (Vancouver - Toronto), 119-120 (Toronto - New York), plus the literal "AC" for the Air Connect bus route'
+      - 'GTFS trip_short_name: VIA train numbers (72, 76, 87)'
+      - 'GTFS ticketing_trip_id: "VIA" + train number (VIA72, VIA87) — the ticketing extension key'
+      - 'GTFS ticketing_deep_link web_url: https://reservia.viarail.ca/google-results — a single VIA-proprietary deep link'
+      - '_u_i_c_station_code: UIC station codes carried on every origin and destination in the Sqills S3 Passenger booking front end. An international rail standard, present in the platform, absent from anything VIA publishes'
+      - 'IATA agency numbers: required to register and to be commissionable ("your agency IATA number is registered")'
+      - 'ACTA, IATA/IATAN, CLIA and UFTAA travel industry IDs: accepted for the AD75 agent fare'
+      - '8-digit VIA tour-operator account numbers: proprietary, issued by VIA'
+      - 'VIA Préférence loyalty numbers: proprietary, on a separate domain (viapreference.com)'
+      - 'caaCardNumber, terminalId, caseNumber, caseConversationId, caseOrigin: proprietary session and case keys named in the reservia bundle'
+    note: >-
+      Because the schedule keys are GTFS keys, a developer's VIA data stays
+      legible after switching to any other transit publisher; the four-letter
+      station mnemonics even survive across the border on the jointly operated
+      Maple Leaf. What does not travel is the commercial relationship — the
+      8-digit tour-operator account number, the VIA Préférence balance and any
+      negotiated preferred-partner terms are VIA-issued and VIA-only, and the
+      UIC codes that WOULD make bookings interoperable sit inside a PSS whose
+      contract VIA does not publish.
+  contractualLockIn:
+    published: true
+    sources:
+      - https://open.canada.ca/en/open-government-licence-canada
+      - https://www.viarail.ca/en/terms-and-conditions
+      - https://www.viarail.ca/en/travel-agents/tour-operator-faq
+      - https://www.viarail.ca/en/travel-agents/travel-agent-faq
+      - https://www.viarail.ca/en/travel-agents/ad75-conditions
+    verbatim:
+      gtfsLicenceGrant: >-
+        Developer Resources page: "By downloading our GTFS data, you agree to be
+        bound to the Open Government Licence – Canada version 2." OGL-Canada
+        2.0: "You are free to: Copy, modify, publish, translate, adapt,
+        distribute or otherwise use the Information in any medium, mode or
+        format for any lawful purpose." Commercial use is permitted.
+      gtfsLicenceAttribution: >-
+        "Acknowledge the source of the Information by including any attribution
+        statement specified by the Information Provider(s) and, where possible,
+        provide a link to this licence… you must use the following attribution
+        statement: Contains information licensed under the Open Government
+        Licence – Canada."
+      gtfsLicenceTermination: >-
+        "The terms of this licence are important, and if you fail to comply with
+        any of them, the rights granted to you under this licence, or any
+        similar licence granted by the Information Provider, will end
+        automatically."
+      siteCommercialUseBan: >-
+        Terms of Use of the Site: "You are permitted to use the Site to inquire
+        about the availability of products and services offered and to make
+        legitimate reservations for yourself or another person for whom you are
+        legally authorized to act. Use of the Site for any other purpose,
+        including for illegal purposes or purposes that are contrary to the
+        Terms and for commercial purposes, is strictly prohibited."
+      siteReverseEngineeringBan: >-
+        "you agree that by accessing or using the Site, you will not commit,
+        participate in, or permit anyone to commit or participate on your behalf
+        in any of the following acts… (b) attempt to copy, reproduce, alter,
+        modify, reverse engineer, disassemble, decompile, or translate the Site;
+        (c) create derivative works of the Site; (d) attempt to extract the
+        source code of the Site"
+      siteAccessRevocation: >-
+        "VIA Rail reserves the right to bar access to the Site to anyone who
+        violates these Terms or applicable laws and to require the removal of
+        any content used in a manner that, in its opinion, violates these Terms
+        or applicable laws."
+      siteLiabilityCap: >-
+        "In any case, should a court hold VIA Rail liable for such damages, VIA
+        Rail shall not be liable for an amount greater than $250 CAD."
+      siteUnilateralAmendment: >-
+        "These Terms may change at any time. Although notices of updates may be
+        used, the posting of these updated Terms will be deemed to constitute
+        sufficient notice."
+      siteGoverningLaw: >-
+        "These Terms are governed by the laws of the Province of Quebec and the
+        applicable laws of Canada… You agree to submit to the jurisdiction of
+        the courts of the judicial district of Montreal, in the province of
+        Quebec, for any dispute or disagreement arising out of these Terms."
+        Last updated August 1, 2024.
+      tourOperatorMinimumRevenue: >-
+        Tour Operator FAQ: "To register and sell itineraries using VIA Rail
+        trains, operators must demonstrate a plan to earn and maintain a minimum
+        revenue of $25,000/year and combine rail tickets with other tour
+        components in travel packages. VIA Rail tickets must not be sold on
+        their own and outside of packaged travel."
+      tourOperatorAccountNumber: >-
+        "Registered tour operators with VIA Rail will have a unique 8-digit
+        account number issued to them."
+      travelAgencyApproval: >-
+        Travel Agent FAQ: "In order to register to sell VIA Rail tickets through
+        our Travel Agency Portal, you must be approved as an individual agency
+        or registered under a preferred partner agreement. If you are an
+        approved agency and your agency IATA number is registered, an
+        administrator needs to be identified."
+      agentFareRestrictions: >-
+        AD75 Terms and Conditions: booking "must be made through the VIA Rail
+        Customer Centre at 1 888 842-0744"; "Tickets issued under this program
+        are non-commissionable"; "Agents are only eligible to travel once
+        annually on the same route, in the same class of service"; "VIA monitors
+        bookings of the AD75 fare program and may restrict future travel from
+        agents who disregard this condition." Programme valid until June 30,
+        2028.
+      carriageConditions: >-
+        Conditions of the contract: "Your rail ticket is not transferable and is
+        valid only for travel on the train(s) and date(s) shown"; "VIA Rail
+        specifically disclaims liability for any inconvenience, expenses, or
+        damages, including lost profits, lost business, or otherwise, resulting
+        from errors in its timetables, schedules, and other representations
+        regarding timing."
+    tension: >-
+      The two published instruments point opposite ways and the Developer
+      Resources page never reconciles them. The Site Terms of Use forbid using
+      the Site "for commercial purposes"; the OGL-Canada 2.0 licence attached to
+      the GTFS grants use "for any lawful purpose", commercial included. The
+      GTFS file is served from www.viarail.ca — the Site. A commercial
+      integrator relies on the narrower-scoped licence overriding the broader
+      site terms for that one file, which is an inference VIA has not written
+      down.
+    notPublished:
+      - 'No API terms of use, rate limits, SLA, deprecation policy or versioning policy — no transactional API is published'
+      - 'No travel agency agreement, tour operator agreement or preferred partner agreement text is published; both FAQs route to an Agency Support desk'
+      - 'No commission schedule, segment fee, debit memo policy or minimum term for agencies'
+      - 'No termination notice period for an agency or tour operator appointment'
+      - 'No exclusivity, full-content, MFN, metasearch or anti-scraping clause could be verified for the agency channel — the agreements are simply not public'
+      - 'No GTFS update cadence, changelog or feed-stability commitment beyond the feed_start_date / feed_end_date window'
+  accessGate:
+    value: self-serve
+    whatADeveloperMustSign: >-
+      For the only published API surface: nothing. A developer visits
+      https://www.viarail.ca/en/developer-resources and downloads
+      https://www.viarail.ca/sites/all/files/gtfs/viarail.zip. No account, no
+      registration form, no API key, no click-through, no rate limit. The single
+      obligation is the OGL-Canada 2.0 attribution requirement, accepted by the
+      act of downloading, and dev@viarail.ca is offered for questions. That makes
+      VIA Rail one of the very few genuinely ungated developer surfaces in
+      Canadian travel.
+    commercialGate: >-
+      To transact is an entirely different gate. A travel agency must hold and
+      register an agency IATA number, be approved individually or fall under a
+      preferred partner agreement, nominate an administrator, then register each
+      agent — all by contacting the Agency Support desk, with no published
+      agreement to read in advance. A tour operator must submit company details,
+      a Canadian-product website and a selling plan, demonstrate a plan to earn
+      and maintain CAD $25,000 per year in revenue, agree to sell VIA tickets
+      only inside packages, and receive an 8-digit VIA account number. Both then
+      transact through a human web sign-in at reservia.viarail.ca. If the enum
+      were scoped to the transactional channel the correct value would be
+      application-approval bordering on accredited-or-licensed.
+  distributionModel:
+    value: direct-only
+    evidence: >-
+      Every channel VIA Rail names is one it owns: viarail.ca, the VIA Rail
+      mobile app, the 1 888 VIA-RAIL customer centre, the Travel Agency Portal
+      and the Tour Operator Portal on reservia.viarail.ca, and a "Business
+      partners" (contra) sign-in on the same host. No GDS is named anywhere on
+      the site. The GTFS agency_fare_url is https://reservia.viarail.ca/ and the
+      only ticketing deep link in the feed is
+      https://reservia.viarail.ca/google-results — VIA points even Google back
+      at its own booking engine rather than at an intermediary.
+    ndcPosture: >-
+      Not applicable. IATA NDC governs airline offer and order management; VIA
+      Rail is a rail operator and NDC appears nowhere on viarail.ca. The rail
+      equivalent is the UIC Open Sales and Distribution Model, and VIA does not
+      reference OSDM either. The interesting wrinkle is that VIA's PSS is Sqills
+      S3 Passenger — a European rail platform whose front end reads
+      _u_i_c_station_code off every segment — so the plumbing for standards-based
+      rail distribution is physically present in the stack while nothing about it
+      is published, certified or offered to partners.
+    platformStack: >-
+      Reservation platform Sqills S3 Passenger (OAuth grant types
+      https://com.sqills.s3.oauth.public / .booking / .agent, plus RFC 8693 token
+      exchange), integrated by CGI (per the
+      api.viarail-dev-cgi-test.cloud.sqills.com fixture host), fronted by AWS API
+      Gateway at api.reservia.viarail.ca and CloudFront, with an Angular SPA on
+      S3. Address completion is Canada Post AddressComplete; loyalty runs on a
+      separate viapreference.com property; the corporate and media sites are a
+      separate Drupal estate on 184.107.63.52. The travel-agent FAQ confirms the
+      platform is new: "Yes, our new reservation system has now launched!"
+sources:
+  - url: https://www.viarail.ca/en/developer-resources
+    type: Documentation
+    fetched: '2026-07-28'
+    status: 200
+    note: >-
+      The Developer Resources page. Primary source for the GTFS offer, the
+      OGL-Canada 2.0 licence condition, the 2026-07-09 last-updated date and the
+      dev@viarail.ca contact.
+  - url: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
+    type: GTFS
+    fetched: '2026-07-28'
+    status: 200
+    note: >-
+      1,010,621 bytes. Saved verbatim to gtfs/viarail-gtfs.zip. Validated by CSV
+      parse of all 12 member files; all five GTFS-required files present.
+  - url: https://open.canada.ca/en/open-government-licence-canada
+    type: License
+    fetched: '2026-07-28'
+    status: 200
+    note: 'Open Government Licence – Canada 2.0. Source of the grant, attribution and auto-termination quotations.'
+  - url: https://www.viarail.ca/en/terms-and-conditions
+    type: TermsOfService
+    fetched: '2026-07-28'
+    status: 200
+    note: >-
+      Terms of Use of the Site, last updated August 1, 2024. Source of the
+      commercial-use ban, reverse-engineering ban, CAD $250 liability cap,
+      unilateral amendment clause and Quebec governing law.
+  - url: https://www.viarail.ca/en/travel-agents/tour-operator-faq
+    type: FAQ
+    fetched: '2026-07-28'
+    status: 200
+    note: 'Source of the $25,000/year minimum revenue commitment, the packaged-travel-only rule and the 8-digit account number.'
+  - url: https://www.viarail.ca/en/travel-agents/travel-agent-faq
+    type: FAQ
+    fetched: '2026-07-28'
+    status: 200
+    note: 'Source of the agency IATA number requirement, approval process and the new-reservation-system statement.'
+  - url: https://www.viarail.ca/en/travel-agents/ad75-conditions
+    type: Policy
+    fetched: '2026-07-28'
+    status: 200
+    note: 'AD75 agent fare terms; phone-only booking, ACTA/IATA/IATAN/CLIA/UFTAA ID, valid to June 30 2028.'
+  - url: https://www.viarail.ca/en/conditions-contract
+    type: Policy
+    fetched: '2026-07-28'
+    status: 200
+    note: 'Conditions of the contract of carriage and limited liability for delays and cancellations.'
+  - url: https://reservia.viarail.ca/en/booking/main.c2fde2a60cb467b6.js
+    type: Reference
+    fetched: '2026-07-28'
+    status: 200
+    note: >-
+      Production Angular bundle. Sole source of the apiGateway.baseUrl template,
+      the Sqills S3 Passenger OAuth grant-type URNs, the CGI test fixture host
+      and the _u_i_c_station_code field usage.
+  - url: https://corpo.viarail.ca/en/company/governance-ethics
+    type: Governance
+    fetched: '2026-07-28'
+    status: 200
+    note: >-
+      Access to Information and Privacy hub. Confirms VIA Rail is subject to the
+      Access to Information Act and the Privacy Act and publishes completed ATI
+      request listings 2012-2018.
+  - url: https://tsimobile.viarail.ca/data/allData.json
+    type: Reference
+    fetched: '2026-07-28'
+    status: 200
+    note: >-
+      Undocumented live train-position JSON behind the VIA Rail Tracker.
+      Recorded as evidence, deliberately not listed as an API.
+  - url: 'https://open.canada.ca/data/en/api/3/action/organization_show?id=viarail'
+    type: Registry
+    fetched: '2026-07-28'
+    status: 200
+    note: 'VIA Rail Canada Inc. exists as an organization on the federal open data portal with package_count 0.'
+actions:
+  openapiHarvested: false
+  specsCount: 0
+  gtfsHarvested: true
+  gtfsPath: gtfs/viarail-gtfs.zip
+  apisListed: 1
+  reason: >-
+    No OpenAPI, AsyncAPI, GraphQL schema or Postman collection exists anywhere
+    on VIA Rail's estate, so the openapi/ directory is deliberately absent
+    rather than empty. One real machine-readable contract was found and
+    harvested verbatim — the GTFS schedule feed — and it is the single entry in
+    apis[]. The two live undocumented surfaces (api.reservia.viarail.ca and
+    tsimobile.viarail.ca/data/allData.json) are recorded in
+    observedButUndocumented and excluded from apis.yml, because neither has a
+    published contract, licence or terms of use.
