@@ -1,0 +1,110 @@
+generated: '2026-07-28'
+method: searched
+source: live probes of every VIA Rail host named in apis.yml, review.yml and the reservia bundle
+summary: >-
+  VIA Rail publishes no API-discovery document at any /.well-known/ path on any
+  host it operates. The only /.well-known/ resource that returns real content
+  anywhere in the estate is an Apple app-site-association file on the booking
+  SPA host, which binds the ca.viarail.reservia iOS app to reservia.viarail.ca
+  for shared web credentials. There is no security.txt, no OpenID Connect
+  discovery document, no RFC 8414 OAuth authorization-server metadata, no
+  RFC 9727 api-catalog and no ai-plugin.json. This artifact records the probe
+  result, including the negatives, so a later round does not re-litigate it.
+  No `WellKnown` pointer is wired into apis.yml because no API-discovery
+  document exists to point at.
+probe_warning: >-
+  reservia.viarail.ca is an S3-hosted Angular SPA behind CloudFront with a
+  catch-all rewrite: every unmatched path returns HTTP 200, text/html, 3,295
+  bytes. A 200 from that host is the SPA shell, not a well-known document. Only
+  /.well-known/apple-app-site-association returns distinct content (89 bytes,
+  application/json). api.reservia.viarail.ca is an AWS API Gateway that answers
+  every path with 403 {"message":"Missing Authentication Token"} — including
+  every /.well-known/ path — so nothing can be read from it anonymously.
+hosts:
+  - host: https://www.viarail.ca
+    role: primary website + the only published API surface (GTFS download)
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /llms.txt
+        status: 404
+      - path: /openapi.json
+        status: 404
+      - path: /swagger.json
+        status: 404
+    note: >-
+      Drupal returns its themed 404 page (HTTP 404, ~363 KB of HTML) for every
+      one of these. Status codes are honest; body is the site 404 template.
+  - host: https://viarail.ca
+    role: apex redirect
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+  - host: https://reservia.viarail.ca
+    role: Sqills S3 Passenger booking SPA (public, agent and contra sign-ins)
+    documents:
+      - path: /.well-known/apple-app-site-association
+        status: 200
+        content_type: application/json
+        bytes: 89
+        file: via-rail-apple-app-site-association.json
+        note: >-
+          Real content. Declares webcredentials for the Apple team-scoped app id
+          472HPNV92M.ca.viarail.reservia. Not an API-discovery document.
+      - path: /.well-known/security.txt
+        status: 200
+        bytes: 3295
+        note: SPA shell, NOT a security.txt. Discarded as a false positive.
+  - host: https://api.reservia.viarail.ca
+    role: undocumented AWS API Gateway fronting the reservation platform
+    documents:
+      - path: /.well-known/security.txt
+        status: 403
+      - path: /.well-known/oauth-authorization-server
+        status: 403
+      - path: /.well-known/openid-configuration
+        status: 403
+      - path: /openapi.json
+        status: 403
+      - path: /swagger.json
+        status: 403
+      - path: /api/v1/openapi.json
+        status: 403
+      - path: /api-docs
+        status: 403
+    note: >-
+      Every response is the identical 42-byte body
+      {"message":"Missing Authentication Token"}. No anonymous metadata is
+      obtainable, so the Sqills OAuth grant types observed in the SPA bundle
+      (https://com.sqills.s3.oauth.public / .booking / .agent, plus RFC 8693
+      token exchange) cannot be confirmed against a published discovery
+      document.
+  - host: https://tsimobile.viarail.ca
+    role: VIA Rail Tracker (undocumented live train positions)
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /openapi.json
+        status: 404
+security_txt:
+  present: false
+  hosts_checked:
+    - www.viarail.ca
+    - viarail.ca
+    - reservia.viarail.ca
+    - api.reservia.viarail.ca
+    - tsimobile.viarail.ca
+  note: >-
+    No RFC 9116 security.txt anywhere. VIA Rail Canada Inc. is a federal Crown
+    corporation; the only published intake route found for anything resembling a
+    formal request is the Access to Information and Privacy process at
+    https://corpo.viarail.ca/en/company/governance-ethics, which is a statutory
+    paper process, not a vulnerability-disclosure channel.

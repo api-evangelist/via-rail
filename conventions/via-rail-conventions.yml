@@ -1,0 +1,130 @@
+generated: '2026-07-28'
+method: derived
+source: >-
+  gtfs/viarail-gtfs.zip + live HEAD/GET against
+  https://www.viarail.ca/sites/all/files/gtfs/viarail.zip (2026-07-28) +
+  https://www.viarail.ca/en/developer-resources
+summary: >-
+  VIA Rail's published contract is a file, not a request/response API, so the
+  cross-cutting semantics are HTTP-transfer semantics plus GTFS semantics.
+  There is no request envelope, no pagination, no expansion, no metadata bag,
+  no request-id tracing, no error envelope and no idempotency key - because
+  every interaction is a single anonymous GET of a static archive. What DOES
+  exist, and is worth capturing, is a correct conditional-request contract and a
+  fully specified file/record model.
+authentication:
+  style: none
+  detail: >-
+    Anonymous HTTPS GET. No key, header, cookie or session. See
+    authentication/via-rail-authentication.yml.
+transport:
+  protocol: HTTPS
+  method: GET
+  url: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
+  content_type: application/zip
+  content_length: 1010621
+  server: Apache behind Varnish/6.6
+  observed_headers:
+    cache-control: 'public, max-age=300'
+    etag: '"f6bbd-6562c3d5f20c2"'
+    last-modified: 'Thu, 09 Jul 2026 11:51:08 GMT'
+    accept-ranges: bytes
+    strict-transport-security: 'max-age=31536000; includeSubDomains'
+    x-content-type-options: nosniff
+    x-xss-protection: '1; mode=block'
+caching_and_conditional_requests:
+  supported: true
+  mechanisms: [ETag, Last-Modified, Accept-Ranges, Cache-Control]
+  guidance: >-
+    Poll with If-None-Match against the ETag (or If-Modified-Since against
+    Last-Modified) and treat a 304 as "no new edition". Cache-Control declares
+    max-age=300 at the edge, so polling more often than every five minutes gains
+    nothing. Range requests are accepted, which makes a cheap size/prefix check
+    possible before downloading the full ~1 MB archive.
+idempotency:
+  supported: false
+  key_header: null
+  note: >-
+    There is no idempotency contract. The only operation is an HTTP GET, which
+    is safe and idempotent by HTTP method semantics (RFC 9110), but VIA Rail
+    publishes no write surface, no idempotency key, no retry policy and no
+    replay window. NO `Idempotency` pointer is wired - safe-by-method is not an
+    idempotency contract and claiming one would be false.
+pagination:
+  supported: false
+  note: >-
+    Not applicable. The feed is delivered whole, every time; there is no
+    listing endpoint to page. This is also the exit story - every consumer holds
+    a complete copy of the dataset after a single request.
+filtering_and_expansion:
+  supported: false
+  note: >-
+    No query parameters of any kind are honoured on the download URL. Filtering
+    by route, station or date happens entirely consumer-side after parsing.
+metadata:
+  supported: false
+  note: >-
+    No custom metadata surface. Feed-level metadata is carried in
+    feed_info.txt (feed_publisher_name, feed_publisher_url, feed_lang,
+    feed_start_date, feed_end_date, feed_contact_email).
+request_tracing:
+  request_id_header: null
+  note: >-
+    No correlation or request-id header is returned. Varnish emits x-varnish,
+    x-cache and x-cache-hits, plus proprietary serverid / env values - CDN
+    diagnostics, not a supported tracing contract.
+versioning:
+  style: dated-file-replacement
+  detail: See lifecycle/via-rail-lifecycle.yml. The URL is unversioned and stable.
+error_envelope:
+  format: none
+  note: >-
+    No API error contract. www.viarail.ca returns the themed Drupal HTML 404
+    page (HTTP 404, ~363 KB) for any wrong path, which is not machine-parseable
+    beyond the status line. The undocumented gateway at
+    api.reservia.viarail.ca returns the AWS default
+    {"message":"Missing Authentication Token"} with HTTP 403 - application/json,
+    not application/problem+json.
+rate_limits:
+  published: false
+  note: >-
+    No rate limit is documented and none was observed. The Developer Resources
+    page imposes no quota. Be a good citizen: honour Cache-Control max-age=300.
+data_format:
+  container: ZIP archive, 12 member files
+  encoding: UTF-8 CSV with a header row per file, comma separated
+  date_format: YYYYMMDD (GTFS service dates)
+  time_format: 'HH:MM:SS, may exceed 24:00:00 for after-midnight service (GTFS rule)'
+  timezone: >-
+    agency_timezone is America/Toronto; every stop also carries an explicit
+    stop_timezone. Times in stop_times.txt are local to the stop's timezone per
+    the GTFS specification - a correctness trap on transcontinental routes such
+    as Vancouver - Toronto and Jasper - Prince Rupert.
+  language: >-
+    feed_lang and agency_lang are both "en". The French site publishes the same
+    archive at https://www.viarail.ca/fr/ressources-developpeurs; the feed
+    itself is single-language, though station names carry French diacritics
+    (Montréal, Québec).
+  coordinates: WGS84 decimal degrees (stop_lat / stop_lon, shape_pt_lat / shape_pt_lon)
+  distance_units: metres (shape_dist_traveled)
+licensing:
+  licence: Open Government Licence - Canada 2.0
+  url: https://open.canada.ca/en/open-government-licence-canada
+  acceptance: by the act of downloading the file
+  attribution_required: true
+  attribution_statement: 'Contains information licensed under the Open Government Licence - Canada.'
+  commercial_use: permitted
+  caveat: >-
+    The Terms of Use of the Site forbid using the Site "for commercial
+    purposes", and the archive is served from the Site. A commercial integrator
+    relies on the narrower file-scoped OGL grant overriding the broader site
+    terms. VIA has never written that reconciliation down. See review.yml
+    switchingCost.contractualLockIn.tension.
+cross_links:
+  authentication: authentication/via-rail-authentication.yml
+  lifecycle: lifecycle/via-rail-lifecycle.yml
+  conformance: conformance/via-rail-conformance.yml
+  data_model: data-model/via-rail-data-model.yml
+  json_schema: json-schema/via-rail-gtfs-schema.json
+  well_known: well-known/via-rail-well-known.yml
+  domain_security: security/via-rail-domain-security.yml

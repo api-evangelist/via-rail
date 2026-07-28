@@ -1,0 +1,242 @@
+generated: '2026-07-28'
+method: derived
+source: gtfs/viarail-gtfs.zip (harvested 2026-07-28, edition 20260709-20261107)
+summary: >-
+  The entity-relationship graph of the only machine-readable contract VIA Rail
+  publishes, derived by reading the actual column headers and key columns of the
+  12 files inside the harvested GTFS archive. Every entity, field and
+  cardinality below was observed in the file, not assumed from the GTFS
+  specification - where VIA omits an optional GTFS file or column, it is absent
+  here too.
+edition:
+  feed_publisher_name: VIA Rail Canada inc.
+  feed_publisher_url: https://www.viarail.ca/
+  feed_contact_email: dev@viarail.ca
+  feed_lang: en
+  feed_start_date: '20260709'
+  feed_end_date: '20261107'
+entities:
+  - name: agency
+    file: agency.txt
+    primary_key: agency_id
+    row_count: 1
+    fields:
+      - agency_id
+      - agency_name
+      - agency_url
+      - agency_timezone
+      - agency_lang
+      - agency_phone
+      - agency_fare_url
+      - ticketing_deep_link_id
+    note: >-
+      Single agency, agency_id 1, "VIA Rail". agency_fare_url points back at
+      VIA's own booking engine https://reservia.viarail.ca/ - the direct-only
+      distribution model visible in the data itself.
+  - name: route
+    file: routes.txt
+    primary_key: route_id
+    row_count: 19
+    fields:
+      - route_id
+      - route_short_name
+      - route_long_name
+      - route_type
+      - route_color
+      - route_text_color
+      - agency_id
+    note: >-
+      route_id is a composite station-pair key built from two stop_id values
+      (226-119 = Montreal - Toronto, 8-119 = Vancouver - Toronto, 119-120 =
+      Toronto - New York), with one literal exception, "AC" for the Air Connect
+      bus. route_type is 2 (rail) on 18 routes and 3 (bus) on Air Connect.
+      route_short_name is the constant string "VIA Rail" on every route, so
+      route_long_name is the only human-distinguishing label.
+  - name: trip
+    file: trips.txt
+    primary_key: trip_id
+    row_count: 85
+    fields:
+      - route_id
+      - service_id
+      - trip_id
+      - shape_id
+      - trip_short_name
+      - trip_headsign
+      - direction_id
+      - ticketing_trip_id
+    note: >-
+      trip_short_name carries the public VIA train number (72, 76, 87) and
+      ticketing_trip_id is that number prefixed with VIA (VIA72, VIA87). In this
+      edition trip_id, service_id and shape_id share the same integer value on
+      every row, so the three are effectively co-keyed per trip.
+  - name: stop_time
+    file: stop_times.txt
+    primary_key: [trip_id, stop_sequence]
+    row_count: 1577
+    fields:
+      - trip_id
+      - arrival_time
+      - departure_time
+      - stop_id
+      - stop_sequence
+      - stop_headsign
+      - pickup_type
+      - drop_off_type
+      - shape_dist_traveled
+      - timepoint
+      - ticketing_type
+  - name: stop
+    file: stops.txt
+    primary_key: stop_id
+    row_count: 388
+    fields:
+      - stop_id
+      - stop_code
+      - stop_name
+      - location_type
+      - stop_lon
+      - stop_lat
+      - stop_timezone
+      - parent_station
+      - wheelchair_boarding
+    note: >-
+      stop_id is an opaque VIA-internal integer; stop_code is the four-letter
+      VIA station mnemonic (BENN Benny, ALEX Alexandria, SARN Sarnia, NIAG
+      Niagara Falls, YONK Yonkers). Every stop carries an explicit
+      stop_timezone, which matters on the transcontinental routes.
+  - name: calendar
+    file: calendar.txt
+    primary_key: service_id
+    row_count: 85
+    fields:
+      - service_id
+      - start_date
+      - end_date
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+      - saturday
+      - sunday
+    note: >-
+      Calendars are declared over a 20240101-20301231 span, far wider than the
+      feed_info window; the real service window is the feed_info pair plus the
+      calendar_dates exceptions.
+  - name: calendar_date
+    file: calendar_dates.txt
+    primary_key: [service_id, date]
+    row_count: 35
+    fields:
+      - service_id
+      - date
+      - exception_type
+  - name: shape_point
+    file: shapes.txt
+    primary_key: [shape_id, shape_pt_sequence]
+    row_count: 86116
+    fields:
+      - shape_id
+      - shape_pt_lat
+      - shape_pt_lon
+      - shape_pt_sequence
+      - shape_dist_traveled
+  - name: frequency
+    file: frequencies.txt
+    primary_key: [trip_id, start_time]
+    row_count: 1
+    fields:
+      - trip_id
+      - start_time
+      - end_time
+      - headway_secs
+      - exact_times
+    note: >-
+      A single row - trip 554, 07:00:00-23:00:00, 1800s headway, exact_times 0.
+      Frequency-based service is the exception, not the rule, in this feed.
+  - name: ticketing_identifier
+    file: ticketing_identifiers.txt
+    primary_key: [agency_id, stop_id]
+    row_count: 388
+    fields:
+      - agency_id
+      - stop_id
+      - ticketing_stop_id
+    note: >-
+      GTFS ticketing extension. Maps every one of the 388 stop_id values to its
+      four-letter ticketing_stop_id mnemonic - a 1:1 shadow of stops.stop_code.
+  - name: ticketing_deep_link
+    file: ticketing_deep_links.txt
+    primary_key: ticketing_deep_link_id
+    row_count: 1
+    fields:
+      - ticketing_deep_link_id
+      - web_url
+    note: >-
+      One row. web_url is https://reservia.viarail.ca/google-results - VIA
+      points even Google's ticketing deep link back at its own booking engine
+      rather than at any intermediary.
+  - name: feed_info
+    file: feed_info.txt
+    primary_key: null
+    row_count: 1
+    fields:
+      - feed_publisher_name
+      - feed_publisher_url
+      - feed_lang
+      - feed_start_date
+      - feed_end_date
+      - feed_contact_email
+relationships:
+  - {from: route, to: agency, kind: belongs_to, via: agency_id}
+  - {from: agency, to: ticketing_deep_link, kind: has_one, via: ticketing_deep_link_id}
+  - {from: trip, to: route, kind: belongs_to, via: route_id}
+  - {from: route, to: trip, kind: has_many, via: route_id}
+  - {from: trip, to: calendar, kind: belongs_to, via: service_id}
+  - {from: calendar, to: calendar_date, kind: has_many, via: service_id}
+  - {from: trip, to: shape_point, kind: has_many, via: shape_id}
+  - {from: trip, to: stop_time, kind: has_many, via: trip_id}
+  - {from: stop_time, to: trip, kind: belongs_to, via: trip_id}
+  - {from: stop_time, to: stop, kind: belongs_to, via: stop_id}
+  - {from: stop, to: stop_time, kind: has_many, via: stop_id}
+  - {from: stop, to: stop, kind: belongs_to, via: parent_station}
+  - {from: ticketing_identifier, to: stop, kind: belongs_to, via: stop_id}
+  - {from: ticketing_identifier, to: agency, kind: belongs_to, via: agency_id}
+  - {from: frequency, to: trip, kind: belongs_to, via: trip_id}
+identifier_domains:
+  - id: stop_id
+    domain: opaque VIA-internal integers (199, 344, 345 ...)
+    portable: false
+  - id: stop_code / ticketing_stop_id
+    domain: four-letter VIA station mnemonics, 388 distinct values
+    portable: partially
+    note: Stable, human-legible and reused across the border on the jointly operated Maple Leaf.
+  - id: route_id
+    domain: 'composite <stop_id>-<stop_id> pairs, plus the literal "AC"'
+    portable: false
+  - id: trip_short_name
+    domain: public VIA train numbers
+    portable: true
+  - id: ticketing_trip_id
+    domain: 'VIA + train number (VIA72, VIA87)'
+    portable: true
+  - id: _u_i_c_station_code
+    domain: UIC international rail station codes
+    portable: true
+    note: >-
+      NOT in the GTFS. Observed only in the Sqills S3 Passenger booking front
+      end, where every origin and destination segment carries it. The one
+      genuinely interoperable rail identifier in VIA's stack is the one VIA does
+      not publish.
+not_modelled:
+  - >-
+    Fares. fare_attributes.txt and fare_rules.txt are absent from the archive,
+    so no price, no fare class and no fare rule is machine-readable anywhere.
+  - >-
+    Transfers, pathways, levels and translations - all optional GTFS files, all
+    absent.
+  - >-
+    Everything transactional: offers, availability, orders, payment, ticketing,
+    servicing, loyalty. No published contract exists, so there is nothing to
+    model. See review.yml observedButUndocumented.

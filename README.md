@@ -64,6 +64,26 @@ Two live surfaces exist without contracts and are deliberately **excluded** from
 
 Full probe log, with an HTTP status for every URL, is in [review.yml](review.yml).
 
+## Enrichment artifacts
+
+Round 2026-07-28. Everything below is searched, probed, or derived from the harvested GTFS archive — nothing is invented. The negatives are recorded deliberately so a later round does not re-litigate them.
+
+| Artifact | Method | What it holds |
+| --- | --- | --- |
+| [`json-schema/via-rail-gtfs-schema.json`](json-schema/via-rail-gtfs-schema.json) | derived | JSON Schema 2020-12 for every record in the 12 GTFS files, read off the real column headers |
+| [`data-model/via-rail-data-model.yml`](data-model/via-rail-data-model.yml) | derived | 12 entities, 15 relationships, row counts, identifier domains, and what is *not* modelled (no fares) |
+| [`conventions/via-rail-conventions.yml`](conventions/via-rail-conventions.yml) | derived | Transfer semantics: conditional requests via `ETag`/`Last-Modified`, `max-age=300`, UTF-8 CSV, per-stop timezones, the OGL/site-terms contradiction |
+| [`authentication/via-rail-authentication.yml`](authentication/via-rail-authentication.yml) | searched | `type: none` — and that is deliberate. Plus the observed-but-unpublished Sqills OAuth grant URNs |
+| [`lifecycle/via-rail-lifecycle.yml`](lifecycle/via-rail-lifecycle.yml) | searched | Dated file replacement at a stable unversioned URL. No deprecation policy, no SLA, no API status page, no changelog |
+| [`conformance/via-rail-conformance.yml`](conformance/via-rail-conformance.yml) | derived | 16 standards assessed. GTFS Schedule + ticketing extension + OGL-Canada 2.0 + conditional requests + HSTS conform; OpenAPI, AsyncAPI, GraphQL, GTFS-Realtime, OSDM, RFC 9457 and RFC 9116 do not |
+| [`well-known/via-rail-well-known.yml`](well-known/via-rail-well-known.yml) | searched | Every `/.well-known/` path on all five hosts. One real document estate-wide: an Apple app-site-association on the booking SPA |
+| [`security/via-rail-domain-security.yml`](security/via-rail-domain-security.yml) | probed | TLSv1.2, HSTS 1y, SPF + DMARC (`quarantine`), no DNSSEC, no CAA |
+| [`llms/via-rail-llms.txt`](llms/via-rail-llms.txt) | generated | `https://www.viarail.ca/llms.txt` is 404, so this is ours |
+
+Deliberately **not** emitted, because the thing does not exist: `openapi/`, `asyncapi/`, `mcp/`, `skills/`, `packages/`, `cli/`, `sandbox/`, `components/`, `scopes/`, `errors/`, `changelog/`, `overlays/`, `grpc/`, `security/via-rail-vulnerability-disclosure.yml`, `security/via-rail-trust-center.yml`.
+
+Registry sweep found no first-party client library on npm, PyPI, RubyGems, Packagist, crates.io, NuGet or Maven Central. The GitHub organization [`VIARailCanada`](https://github.com/VIARailCanada) is real — registered 2016-05-31, `blog: https://viarail.ca/` — and has **zero** public repositories.
+
 ## Switching Cost
 
 The point of this profile. Summarised from the `switchingCost` block in [review.yml](review.yml).

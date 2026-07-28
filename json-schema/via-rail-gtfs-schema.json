@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/via-rail/refs/heads/main/json-schema/via-rail-gtfs-schema.json",
+  "title": "VIA Rail GTFS Schedule Feed",
+  "description": "JSON Schema for the record shape of every file in the VIA Rail Canada static GTFS archive. DERIVED on 2026-07-28 by reading the actual column headers and observed values of gtfs/viarail-gtfs.zip (edition 20260709-20261107). Only files and columns VIA Rail actually ships are described; optional GTFS files VIA omits (fare_attributes, fare_rules, transfers, pathways, levels, translations) are deliberately absent. GTFS is distributed as UTF-8 CSV, so this schema describes each row after CSV parsing, with every value read as a string unless the column is numeric in the file.",
+  "x-generated": "2026-07-28",
+  "x-method": "derived",
+  "x-source": "gtfs/viarail-gtfs.zip",
+  "x-specification": "https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md",
+  "x-license": "Open Government Licence - Canada 2.0 (https://open.canada.ca/en/open-government-licence-canada)",
+  "type": "object",
+  "properties": {
+    "agency": { "type": "array", "items": { "$ref": "#/$defs/Agency" } },
+    "routes": { "type": "array", "items": { "$ref": "#/$defs/Route" } },
+    "trips": { "type": "array", "items": { "$ref": "#/$defs/Trip" } },
+    "stops": { "type": "array", "items": { "$ref": "#/$defs/Stop" } },
+    "stop_times": { "type": "array", "items": { "$ref": "#/$defs/StopTime" } },
+    "calendar": { "type": "array", "items": { "$ref": "#/$defs/Calendar" } },
+    "calendar_dates": { "type": "array", "items": { "$ref": "#/$defs/CalendarDate" } },
+    "shapes": { "type": "array", "items": { "$ref": "#/$defs/ShapePoint" } },
+    "frequencies": { "type": "array", "items": { "$ref": "#/$defs/Frequency" } },
+    "feed_info": { "type": "array", "items": { "$ref": "#/$defs/FeedInfo" } },
+    "ticketing_identifiers": { "type": "array", "items": { "$ref": "#/$defs/TicketingIdentifier" } },
+    "ticketing_deep_links": { "type": "array", "items": { "$ref": "#/$defs/TicketingDeepLink" } }
+  },
+  "$defs": {
+    "GtfsDate": {
+      "type": "string",
+      "pattern": "^[0-9]{8}$",
+      "description": "GTFS service date, YYYYMMDD."
+    },
+    "GtfsTime": {
+      "type": "string",
+      "pattern": "^[0-9]{1,3}:[0-5][0-9]:[0-5][0-9]$",
+      "description": "GTFS time, HH:MM:SS local to the stop's timezone. May exceed 24:00:00 for service continuing past midnight."
+    },
+    "Agency": {
+      "type": "object",
+      "description": "agency.txt - 1 row in the harvested edition.",
+      "properties": {
+        "agency_id": { "type": "string", "examples": ["1"] },
+        "agency_name": { "type": "string", "examples": ["VIA Rail"] },
+        "agency_url": { "type": "string", "format": "uri", "examples": ["https://www.viarail.ca"] },
+        "agency_timezone": { "type": "string", "examples": ["America/Toronto"] },
+        "agency_lang": { "type": "string", "examples": ["en"] },
+        "agency_phone": { "type": "string", "examples": ["1 888 VIA-RAIL"] },
+        "agency_fare_url": { "type": "string", "format": "uri", "examples": ["https://reservia.viarail.ca/"] },
+        "ticketing_deep_link_id": { "type": "string", "description": "GTFS ticketing extension. References ticketing_deep_links.ticketing_deep_link_id." }
+      },
+      "required": ["agency_id", "agency_name", "agency_url", "agency_timezone"]
+    },
+    "Route": {
+      "type": "object",
+      "description": "routes.txt - 19 rows. route_id is a composite <stop_id>-<stop_id> station-pair key, except the literal 'AC' for the Air Connect bus.",
+      "properties": {
+        "route_id": { "type": "string", "examples": ["226-119", "8-119", "119-120", "AC"] },
+        "route_short_name": { "type": "string", "description": "Constant string 'VIA Rail' on every row in this edition." },
+        "route_long_name": { "type": "string", "examples": ["Montréal - Toronto", "Vancouver - Toronto", "Jasper - Prince Rupert"] },
+        "route_type": {
+          "type": "string",
+          "enum": ["2", "3"],
+          "description": "Observed values only: 2 = rail (18 routes), 3 = bus (Air Connect)."
+        },
+        "route_color": { "type": "string", "pattern": "^[0-9A-Fa-f]{6}$", "examples": ["FFCB06"] },
+        "route_text_color": { "type": "string", "pattern": "^[0-9A-Fa-f]{6}$", "examples": ["000000"] },
+        "agency_id": { "type": "string" }
+      },
+      "required": ["route_id", "route_type"]
+    },
+    "Trip": {
+      "type": "object",
+      "description": "trips.txt - 85 rows.",
+      "properties": {
+        "route_id": { "type": "string" },
+        "service_id": { "type": "string", "description": "References calendar.service_id." },
+        "trip_id": { "type": "string" },
+        "shape_id": { "type": "string", "description": "References shapes.shape_id." },
+        "trip_short_name": { "type": "string", "description": "Public VIA train number.", "examples": ["72", "76", "87"] },
+        "trip_headsign": { "type": "string", "examples": ["Sarnia", "Toronto"] },
+        "direction_id": { "type": "string", "enum": ["0", "1"] },
+        "ticketing_trip_id": { "type": "string", "description": "GTFS ticketing extension. 'VIA' + train number.", "examples": ["VIA72", "VIA87"] }
+      },
+      "required": ["route_id", "service_id", "trip_id"]
+    },
+    "Stop": {
+      "type": "object",
+      "description": "stops.txt - 388 rows.",
+      "properties": {
+        "stop_id": { "type": "string", "description": "Opaque VIA-internal integer.", "examples": ["199", "344"] },
+        "stop_code": { "type": "string", "description": "Four-letter VIA station mnemonic.", "examples": ["BENN", "ALEX", "SARN", "NIAG"] },
+        "stop_name": { "type": "string", "examples": ["Benny", "Alexandria"] },
+        "location_type": { "type": "string", "enum": ["0", "1", "2", "3", "4"] },
+        "stop_lon": { "type": "string", "description": "WGS84 decimal degrees." },
+        "stop_lat": { "type": "string", "description": "WGS84 decimal degrees." },
+        "stop_timezone": { "type": "string", "examples": ["America/Toronto", "America/Vancouver"] },
+        "parent_station": { "type": "string" },
+        "wheelchair_boarding": { "type": "string", "enum": ["", "0", "1", "2"] }
+      },
+      "required": ["stop_id", "stop_name", "stop_lat", "stop_lon"]
+    },
+    "StopTime": {
+      "type": "object",
+      "description": "stop_times.txt - 1,577 rows.",
+      "properties": {
+        "trip_id": { "type": "string" },
+        "arrival_time": { "$ref": "#/$defs/GtfsTime" },
+        "departure_time": { "$ref": "#/$defs/GtfsTime" },
+        "stop_id": { "type": "string" },
+        "stop_sequence": { "type": "string" },
+        "stop_headsign": { "type": "string" },
+        "pickup_type": { "type": "string" },
+        "drop_off_type": { "type": "string" },
+        "shape_dist_traveled": { "type": "string", "description": "Metres along the trip shape." },
+        "timepoint": { "type": "string", "enum": ["", "0", "1"] },
+        "ticketing_type": { "type": "string", "description": "GTFS ticketing extension. Empty on every row in this edition." }
+      },
+      "required": ["trip_id", "stop_id", "stop_sequence"]
+    },
+    "Calendar": {
+      "type": "object",
+      "description": "calendar.txt - 85 rows. Declared over 20240101-20301231, far wider than the feed_info window.",
+      "properties": {
+        "service_id": { "type": "string" },
+        "start_date": { "$ref": "#/$defs/GtfsDate" },
+        "end_date": { "$ref": "#/$defs/GtfsDate" },
+        "monday": { "type": "string", "enum": ["0", "1"] },
+        "tuesday": { "type": "string", "enum": ["0", "1"] },
+        "wednesday": { "type": "string", "enum": ["0", "1"] },
+        "thursday": { "type": "string", "enum": ["0", "1"] },
+        "friday": { "type": "string", "enum": ["0", "1"] },
+        "saturday": { "type": "string", "enum": ["0", "1"] },
+        "sunday": { "type": "string", "enum": ["0", "1"] }
+      },
+      "required": ["service_id", "start_date", "end_date", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    },
+    "CalendarDate": {
+      "type": "object",
+      "description": "calendar_dates.txt - 35 rows.",
+      "properties": {
+        "service_id": { "type": "string" },
+        "date": { "$ref": "#/$defs/GtfsDate" },
+        "exception_type": { "type": "string", "enum": ["1", "2"], "description": "1 = service added, 2 = service removed." }
+      },
+      "required": ["service_id", "date", "exception_type"]
+    },
+    "ShapePoint": {
+      "type": "object",
+      "description": "shapes.txt - 86,116 rows.",
+      "properties": {
+        "shape_id": { "type": "string" },
+        "shape_pt_lat": { "type": "string" },
+        "shape_pt_lon": { "type": "string" },
+        "shape_pt_sequence": { "type": "string" },
+        "shape_dist_traveled": { "type": "string", "description": "Metres from the start of the shape." }
+      },
+      "required": ["shape_id", "shape_pt_lat", "shape_pt_lon", "shape_pt_sequence"]
+    },
+    "Frequency": {
+      "type": "object",
+      "description": "frequencies.txt - 1 row (trip 554, 07:00:00-23:00:00, 1800s headway).",
+      "properties": {
+        "trip_id": { "type": "string" },
+        "start_time": { "$ref": "#/$defs/GtfsTime" },
+        "end_time": { "$ref": "#/$defs/GtfsTime" },
+        "headway_secs": { "type": "string" },
+        "exact_times": { "type": "string", "enum": ["", "0", "1"] }
+      },
+      "required": ["trip_id", "start_time", "end_time", "headway_secs"]
+    },
+    "FeedInfo": {
+      "type": "object",
+      "description": "feed_info.txt - 1 row. The only edition marker inside the archive.",
+      "properties": {
+        "feed_publisher_name": { "type": "string", "examples": ["VIA Rail Canada inc."] },
+        "feed_publisher_url": { "type": "string", "format": "uri", "examples": ["https://www.viarail.ca/"] },
+        "feed_lang": { "type": "string", "examples": ["en"] },
+        "feed_start_date": { "$ref": "#/$defs/GtfsDate" },
+        "feed_end_date": { "$ref": "#/$defs/GtfsDate" },
+        "feed_contact_email": { "type": "string", "format": "email", "examples": ["dev@viarail.ca"] }
+      },
+      "required": ["feed_publisher_name", "feed_publisher_url", "feed_lang"]
+    },
+    "TicketingIdentifier": {
+      "type": "object",
+      "description": "ticketing_identifiers.txt - 388 rows. GTFS ticketing extension.",
+      "properties": {
+        "agency_id": { "type": "string" },
+        "stop_id": { "type": "string" },
+        "ticketing_stop_id": { "type": "string", "description": "Four-letter VIA station mnemonic.", "examples": ["BENN", "ALEX"] }
+      },
+      "required": ["agency_id", "stop_id", "ticketing_stop_id"]
+    },
+    "TicketingDeepLink": {
+      "type": "object",
+      "description": "ticketing_deep_links.txt - 1 row. GTFS ticketing extension.",
+      "properties": {
+        "ticketing_deep_link_id": { "type": "string" },
+        "web_url": { "type": "string", "format": "uri", "examples": ["https://reservia.viarail.ca/google-results"] }
+      },
+      "required": ["ticketing_deep_link_id"]
+    }
+  }
+}

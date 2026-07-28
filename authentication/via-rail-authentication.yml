@@ -1,0 +1,78 @@
+generated: '2026-07-28'
+method: searched
+source: https://www.viarail.ca/en/developer-resources
+docs: https://www.viarail.ca/en/developer-resources
+summary:
+  types: [none]
+  api_key_in: []
+  oauth2_flows: []
+  note: >-
+    The one API surface VIA Rail publishes requires no authentication at all -
+    no account, no registration form, no API key, no click-through and no rate
+    limit. That is a positive, deliberate and documented posture, not a gap: the
+    Developer Resources page hands over a complete national rail timetable to an
+    anonymous HTTP GET, and the only obligation attached is the OGL-Canada 2.0
+    attribution requirement, accepted by the act of downloading.
+schemes:
+  - name: none
+    type: none
+    surface: VIA Rail GTFS Schedule Feed
+    url: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
+    transport: HTTPS GET
+    credential: null
+    registration_required: false
+    rate_limited: false
+    evidence: >-
+      Developer Resources page, fetched 2026-07-28, HTTP 200: "VIA Rail has
+      schedules published in the General Transit Feed Specification (GTFS)
+      format available for developers. By downloading our GTFS data, you agree
+      to be bound to the Open Government Licence - Canada version 2." No
+      credential of any kind is requested. Anonymous GET of the archive returned
+      HTTP 200 and 1,010,621 bytes on 2026-07-28.
+    obligations:
+      - >-
+        OGL-Canada 2.0 attribution: "Contains information licensed under the
+        Open Government Licence - Canada."
+    contact: dev@viarail.ca
+transport_security:
+  https_required: true
+  hsts: true
+  hsts_max_age: 31536000
+  tls_version: TLSv1.2
+  source: security/via-rail-domain-security.yml
+undocumented_surfaces:
+  - name: reservation platform gateway
+    host: https://api.reservia.viarail.ca
+    documented: false
+    observed_behaviour: >-
+      Every path returns HTTP 403 with the 42-byte AWS API Gateway body
+      {"message":"Missing Authentication Token"} - including every /.well-known/
+      path. Nothing can be read anonymously.
+    observed_scheme: >-
+      The reservia.viarail.ca production Angular bundle declares an
+      s3Passenger.grantTypes map of Sqills S3 Passenger OAuth grant-type URNs -
+      https://com.sqills.s3.oauth.public, https://com.sqills.s3.oauth.booking
+      and https://com.sqills.s3.oauth.agent - alongside refresh_token and
+      urn:ietf:params:oauth:grant-type:token-exchange (RFC 8693). This is
+      evidence of the vendor platform's OAuth machinery, NOT a published VIA
+      Rail authentication contract: there is no authorization-server metadata
+      document, no documented scopes, no client registration path and no terms
+      of use. It is recorded here so a later round does not mistake it for a
+      published scheme, and it is the reason no scopes/ artifact is emitted.
+  - name: VIA Rail Tracker data feed
+    host: https://tsimobile.viarail.ca/data/allData.json
+    documented: false
+    observed_behaviour: >-
+      HTTP 200, ~242 KB of live train positions and bilingual alerts, entirely
+      unauthenticated. Undocumented, unlicensed, unschema'd; not offered as an
+      API and excluded from apis.yml.
+human_access_gates:
+  note: >-
+    Authentication for the commercial channel is human, not machine. Travel
+    agencies sign in at https://reservia.viarail.ca/en/booking/agent/login and
+    business partners at .../contra/login, both Angular sign-ins with Google
+    reCAPTCHA. Enrolment is out-of-band: an agency must hold and register an
+    agency IATA number and be approved individually or under a preferred
+    partner agreement; a tour operator must commit to CAD $25,000/year minimum
+    revenue and is issued a proprietary 8-digit account number. There is no
+    machine credential to obtain at any price.

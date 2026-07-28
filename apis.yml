@@ -80,11 +80,33 @@ apis:
         url: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
       - type: Email
         url: mailto:dev@viarail.ca
+      - type: JSONSchema
+        url: json-schema/via-rail-gtfs-schema.json
+      - type: DataModel
+        url: data-model/via-rail-data-model.yml
 common:
+  - type: DomainSecurity
+    url: security/via-rail-domain-security.yml
+  - type: Authentication
+    url: authentication/via-rail-authentication.yml
+  - type: Conventions
+    url: conventions/via-rail-conventions.yml
+  - type: Lifecycle
+    url: lifecycle/via-rail-lifecycle.yml
+  - type: Conformance
+    url: conformance/via-rail-conformance.yml
+  - type: LLMsTxt
+    url: llms/via-rail-llms.txt
   - type: Website
     url: https://www.viarail.ca/en
+  - type: DeveloperPortal
+    url: https://www.viarail.ca/en/developer-resources
   - type: Documentation
     url: https://www.viarail.ca/en/developer-resources
+  - type: Support
+    url: https://www.viarail.ca/en/contact-us
+  - type: GitHubOrganization
+    url: https://github.com/VIARailCanada
   - type: DocumentationFrench
     url: https://www.viarail.ca/fr/ressources-developpeurs
   - type: Corporate
@@ -109,7 +131,7 @@ common:
     url: https://www.viarail.ca/en/terms-and-conditions
   - type: Policy
     url: https://www.viarail.ca/en/conditions-contract
-  - type: Privacy
+  - type: PrivacyPolicy
     url: https://www.viarail.ca/en/our-privacy-policy
   - type: License
     url: https://open.canada.ca/en/open-government-licence-canada

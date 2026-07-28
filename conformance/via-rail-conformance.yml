@@ -1,0 +1,149 @@
+generated: '2026-07-28'
+method: derived
+source: gtfs/viarail-gtfs.zip (harvested 2026-07-28) + live probes recorded in review.yml
+summary: >-
+  VIA Rail conforms to exactly one machine-readable standard, and it conforms to
+  it cleanly: GTFS Schedule, plus the GTFS ticketing extension. Everything else
+  in the cross-cutting API standards space is either not applicable to a rail
+  operator or simply not published. The transactional platform underneath
+  (Sqills S3 Passenger) demonstrably speaks OAuth 2.0 and RFC 8693 token
+  exchange and carries UIC station codes, but none of that is published,
+  certified or offered under a contract, so it is recorded as observed and not
+  as conformance.
+standards:
+  - id: gtfs-schedule
+    name: General Transit Feed Specification (Schedule)
+    conforms: true
+    evidence: >-
+      gtfs/viarail-gtfs.zip parses as valid GTFS with a plain CSV reader. All
+      five GTFS-required files are present (agency.txt, stops.txt, routes.txt,
+      trips.txt, stop_times.txt) alongside calendar.txt, calendar_dates.txt,
+      feed_info.txt, frequencies.txt and shapes.txt. 1 agency, 19 routes, 388
+      stops, 85 trips, 1,577 stop times, 86,116 shape points, 85 calendars, 35
+      calendar exceptions.
+    reference: https://github.com/google/transit/blob/master/gtfs/spec/en/reference.md
+  - id: gtfs-ticketing-extension
+    name: GTFS ticketing extension (ticketing_identifiers / ticketing_deep_links)
+    conforms: true
+    evidence: >-
+      ticketing_identifiers.txt maps all 388 stop_id values to four-letter VIA
+      ticketing_stop_id mnemonics (BENN, ALEX, SARN, NIAG …);
+      ticketing_deep_links.txt declares a single web_url of
+      https://reservia.viarail.ca/google-results; agency.txt carries
+      ticketing_deep_link_id 1; trips.txt carries ticketing_trip_id of the form
+      VIA72 / VIA87; stop_times.txt declares the ticketing_type column.
+  - id: gtfs-realtime
+    name: GTFS Realtime
+    conforms: false
+    evidence: >-
+      No GTFS-Realtime feed is published or referenced. The Developer Resources
+      page offers the static schedule archive only. Live train positions do move
+      over https://tsimobile.viarail.ca/data/allData.json, but that is a bespoke
+      JSON shape behind the VIA Rail Tracker web page — not protobuf, not
+      GTFS-RT, undocumented, unlicensed and not offered as a feed.
+  - id: ogl-canada-2.0
+    name: Open Government Licence - Canada 2.0
+    conforms: true
+    evidence: >-
+      Developer Resources page, fetched 2026-07-28, HTTP 200: "By downloading
+      our GTFS data, you agree to be bound to the Open Government Licence -
+      Canada version 2." The licence grants copy, modify, publish, translate,
+      adapt, distribute and commercial use for any lawful purpose, subject to
+      the prescribed attribution statement.
+    reference: https://open.canada.ca/en/open-government-licence-canada
+  - id: rfc9116-security-txt
+    name: RFC 9116 security.txt
+    conforms: false
+    evidence: >-
+      /.well-known/security.txt returns 404 on www.viarail.ca, viarail.ca and
+      tsimobile.viarail.ca, 403 on api.reservia.viarail.ca, and the SPA shell on
+      reservia.viarail.ca. See well-known/via-rail-well-known.yml.
+  - id: rfc9457-problem-details
+    name: RFC 9457 Problem Details for HTTP APIs
+    conforms: false
+    evidence: >-
+      No published REST API and no documented error contract. The only error
+      body observable anywhere in the estate is the AWS API Gateway default
+      {"message":"Missing Authentication Token"} from api.reservia.viarail.ca,
+      which is application/json, not application/problem+json.
+  - id: openapi
+    name: OpenAPI Specification
+    conforms: false
+    evidence: >-
+      No OpenAPI or Swagger document exists at any probed path on
+      www.viarail.ca, api.reservia.viarail.ca, reservia.viarail.ca or
+      tsimobile.viarail.ca. The developer., developers., api., apis., docs. and
+      cdn. subdomains of viarail.ca are NXDOMAIN.
+  - id: asyncapi
+    name: AsyncAPI
+    conforms: false
+    evidence: No event, streaming or webhook surface is published or documented.
+  - id: graphql
+    name: GraphQL
+    conforms: false
+    evidence: >-
+      No /graphql surface found on any host. The reservia production bundle
+      declares a REST apiGateway.baseUrl template, not a GraphQL endpoint.
+  - id: oauth2
+    name: OAuth 2.0
+    conforms: unpublished
+    evidence: >-
+      Observed but not published. The reservia.viarail.ca production Angular
+      bundle declares an s3Passenger.grantTypes map of Sqills grant-type URNs -
+      https://com.sqills.s3.oauth.public, .booking and .agent - plus
+      refresh_token and urn:ietf:params:oauth:grant-type:token-exchange. There
+      is no authorization-server metadata document, no documented scopes, no
+      client registration and no published contract, so this is evidence of the
+      vendor platform's capability, not a VIA Rail conformance claim.
+  - id: rfc8693-token-exchange
+    name: RFC 8693 OAuth 2.0 Token Exchange
+    conforms: unpublished
+    evidence: >-
+      urn:ietf:params:oauth:grant-type:token-exchange appears in the
+      reservia.viarail.ca production bundle grant-type map. Not documented.
+  - id: osdm
+    name: UIC Open Sales and Distribution Model
+    conforms: false
+    evidence: >-
+      OSDM is the rail analogue of airline NDC and is the standard that would
+      make VIA inventory distributable. It is never referenced on any VIA Rail
+      property probed. The irony is recorded in review.yml: the booking front
+      end reads _u_i_c_station_code off every segment, so UIC identifiers are
+      physically present in the stack while OSDM is neither implemented in
+      public nor claimed.
+    reference: https://osdm.io/
+  - id: iata-ndc
+    name: IATA New Distribution Capability
+    conforms: false
+    applicable: false
+    evidence: >-
+      NDC governs airline offer and order management. VIA Rail is a rail
+      operator; NDC is out of scope and appears nowhere on the estate. Recorded
+      only because the travel-distribution rubric asks for it.
+  - id: rfc8594-sunset-header
+    name: RFC 8594 Sunset HTTP header
+    conforms: false
+    evidence: No deprecation or sunset policy is published. See lifecycle/via-rail-lifecycle.yml.
+  - id: http-conditional-requests
+    name: HTTP conditional requests (RFC 9110 ETag / Last-Modified)
+    conforms: true
+    evidence: >-
+      HEAD https://www.viarail.ca/sites/all/files/gtfs/viarail.zip on 2026-07-28
+      returned ETag "f6bbd-6562c3d5f20c2", Last-Modified "Thu, 09 Jul 2026
+      11:51:08 GMT", Accept-Ranges bytes and Cache-Control public, max-age=300.
+      A consumer can poll the feed correctly with If-None-Match /
+      If-Modified-Since. This is the only versioning affordance VIA offers.
+  - id: hsts
+    name: HTTP Strict Transport Security (RFC 6797)
+    conforms: true
+    evidence: >-
+      www.viarail.ca returns strict-transport-security max-age=31536000;
+      includeSubDomains. See security/via-rail-domain-security.yml.
+certifications_published: false
+certifications_note: >-
+  No SOC 2, ISO 27001, PCI DSS, HIPAA or FedRAMP attestation is published on any
+  VIA Rail property, and no trust centre exists (probe result: none). VIA Rail
+  Canada Inc. is instead bound by Canadian federal statute - the Access to
+  Information Act and the Privacy Act - with the ATIP hub at
+  https://corpo.viarail.ca/en/company/governance-ethics. Statutory obligation is
+  not a published compliance programme, so no `Compliance` pointer is wired.

@@ -1,0 +1,88 @@
+generated: '2026-07-28'
+method: searched
+source: https://www.viarail.ca/en/developer-resources + HEAD on the GTFS archive + gtfs/viarail-gtfs.zip feed_info.txt
+summary: >-
+  There is no API lifecycle policy because there is no API. What VIA Rail
+  operates instead is a file lifecycle: one zip archive at a stable URL,
+  replaced in place, dated on the Developer Resources page and bounded by the
+  feed_start_date / feed_end_date pair inside feed_info.txt. Everything a
+  lifecycle artifact would normally record - versioning scheme, deprecation
+  policy, sunset headers, SLA, API status page - is not published.
+versioning:
+  scheme: dated-file-replacement
+  current: '2026-07-09'
+  current_window: '20260709 - 20261107'
+  docs: https://www.viarail.ca/en/developer-resources
+  url_stability: >-
+    The download URL https://www.viarail.ca/sites/all/files/gtfs/viarail.zip is
+    unversioned and stable; each new edition overwrites it. There is no
+    /v1/, no dated filename, no archive of prior editions and no way to pin a
+    previous edition once it is replaced.
+  version_markers:
+    - marker: page text
+      value: 'Link to download VIA Rail GTFS file (last updated on July 9th, 2026)'
+      source: https://www.viarail.ca/en/developer-resources
+    - marker: Last-Modified
+      value: 'Thu, 09 Jul 2026 11:51:08 GMT'
+      source: HEAD https://www.viarail.ca/sites/all/files/gtfs/viarail.zip (2026-07-28)
+    - marker: ETag
+      value: '"f6bbd-6562c3d5f20c2"'
+      source: HEAD https://www.viarail.ca/sites/all/files/gtfs/viarail.zip (2026-07-28)
+    - marker: feed_info.feed_start_date / feed_end_date
+      value: '20260709 / 20261107'
+      source: gtfs/viarail-gtfs.zip#feed_info.txt
+  polling_guidance: >-
+    Because the URL is stable and the origin returns ETag, Last-Modified and
+    Cache-Control public, max-age=300, the correct consumption pattern is a
+    conditional GET with If-None-Match or If-Modified-Since. VIA publishes no
+    refresh cadence, so a consumer must poll; the ~121-day service window in
+    feed_info is the only hint at how long an edition is expected to stand.
+deprecation:
+  policy_url: null
+  policy_published: false
+  sunset_header: false
+  note: >-
+    No deprecation policy, no notice period, no sunset or deprecation headers,
+    no archive of superseded editions. The previous GTFS edition simply ceases
+    to exist at the URL when a new one is uploaded. Nothing is published about
+    withdrawing the feed altogether.
+sla:
+  url: null
+  published: false
+  uptime_target: null
+  note: >-
+    No SLA, no uptime target and no support commitment attach to the GTFS
+    download. The only support channel offered to developers is the
+    dev@viarail.ca mailbox named on the Developer Resources page, with no
+    response-time commitment.
+status_page: null
+status_page_note: >-
+  VIA Rail publishes no service-status or incident page for any developer
+  surface. https://tsimobile.viarail.ca/ is the VIA Rail Tracker - a passenger
+  map of live train positions - and https://www.viarail.ca/en/travel-info/
+  service updates cover train operations, not data availability. Neither is an
+  API status page, so no `StatusPage` pointer is wired.
+changelog:
+  published: false
+  note: >-
+    No dated changelog exists for the feed. The Developer Resources page carries
+    a single "last updated on" date that is overwritten each edition, so change
+    history is not recoverable from anything VIA publishes. No `ChangeLog`
+    pointer is wired.
+deprecated_operations: []
+undocumented_surfaces:
+  - host: https://api.reservia.viarail.ca
+    note: >-
+      Live AWS API Gateway fronting Sqills S3 Passenger. No versioning policy,
+      no deprecation policy, no published contract of any kind. The reservia
+      production bundle names an environment enum of dev, dev-config, ppd, prod,
+      qa, qc and training behind an apiGateway.baseUrl template of
+      "https://api.{{env}}tst.reservia.viarail.ca", and routes /apidocs only
+      when !isProd() - so API documentation is deliberately absent in
+      production.
+  - host: https://tsimobile.viarail.ca/data/allData.json
+    note: >-
+      Public, unauthenticated, undocumented live train-position JSON. No
+      version, no schema, no licence, no stability commitment. It is an
+      implementation detail of a web page and can change or vanish without
+      notice.
