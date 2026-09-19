@@ -86,6 +86,13 @@ apis:
     baseURL: https://www.viarail.ca/sites/all/files/gtfs/viarail.zip
     tags:
       - GTFS
+      - Schedule
+      - Timetables
+      - Transit
+      - Open Data
+      - Rail
+    tags_raw:
+      - GTFS
       - Schedules
       - Timetables
       - Transit
